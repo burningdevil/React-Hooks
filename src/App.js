@@ -1,25 +1,23 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState } from 'react';
 
-function App() {
+export default function Counter() {
+  const [age, setAge] = useState(42);
+
+  function increment() {
+    setAge(a => a + 1);
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <h1>Your age: {age}</h1>
+      <button onClick={() => {
+        increment(); // 43
+        increment(); // 43
+        increment(); // 43
+      }}>+3</button>
+      <button onClick={() => {
+        increment();
+      }}>+1</button>
+    </>
   );
 }
-
-export default App;
