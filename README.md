@@ -1,70 +1,635 @@
-# Getting Started with Create React App
+# React Hooks
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Overview
 
-## Available Scripts
+### Class component and function component
 
-In the project directory, you can run:
+```js
+// function component
+function aa(props) {
+    return <></>
+}
 
-### `npm start`
+// class component
+class bb extends React.Component {
+    constructor(props) {
+        super(props)
+    }
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+    componentDidMount() {
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+    }
 
-### `npm test`
+    render() {
+        return <></>
+    }
+}
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Hooks
 
-### `npm run build`
+function component is a pure function.  
+Stateless, No lifecycle methods.  
+Decoupled, easy to read/write/test.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+**React Hooks** are the feature that React added to allow you use more of React’s features without classes.  
+Hooks let you “hook into” React state and lifecycle features from function components. Hooks don’t work inside classes — they let you use React without classes.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## useState
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+let you add a state variable to your component.
 
-### `npm run eject`
+```js
+// class
+class Example extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0
+    };
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+    // ...
+}
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+// function
+function Example() {
+  // Declare a new state variable, which we'll call "count"
+  const [count, setCount] = useState(0);
+  // ...
+}
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- Automatically renders the component again whenever the state changes.
+- Not permit the state to be changed whilst it is rendering components (which might trigger an infinite loop).
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Like state, the `set` function lets you update the state and triger a re-render.
 
-## Learn More
+```js
+import { useState } from 'react';
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+export default function Counter() {
+  const [count, setCount] = useState(0);
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+  function handleClick() {
+    setCount(count + 1);
+  }
 
-### Code Splitting
+  return (
+    <button onClick={handleClick}>
+      You pressed me {count} times
+    </button>
+  );
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### diff in passing updater function and next state directly
 
-### Analyzing the Bundle Size
+the `set` functon only update the state variable for the next render. If you read the state variable after calling the set function, you will still get the old value that was on the screen before your call.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```js
+import { useState } from 'react';
 
-### Making a Progressive Web App
+export default function Counter() {
+  const [age, setAge] = useState(42);
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+  function increment() {
+    setAge(age + 1);
+  }
 
-### Advanced Configuration
+  return (
+    <>
+      <h1>Your age: {age}</h1>
+      <button onClick={() => {
+        increment(); // 43
+        increment(); // 43
+        increment(); // 43
+      }}>+3</button>
+      <button onClick={() => {
+        increment();
+      }}>+1</button>
+    </>
+  );
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+The *update function* will take the pending state and calculats the next state from it.
 
-### Deployment
+```js
+import { useState } from 'react';
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+export default function Counter() {
+  const [age, setAge] = useState(42);
 
-### `npm run build` fails to minify
+  function increment() {
+    setAge(a => a + 1);
+  }
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+  return (
+    <>
+      <h1>Your age: {age}</h1>
+      <button onClick={() => {
+        increment(); // 43
+        increment(); // 44
+        increment(); // 45
+      }}>+3</button>
+      <button onClick={() => {
+        increment();
+      }}>+1</button>
+    </>
+  );
+}
+```
+
+## useEffect
+
+You’ve likely performed data fetching, subscriptions, or manually changing the DOM from React components before. We call these operations “side effects” (or “effects” for short) because they can affect other components and can’t be done during rendering.  
+The *Effect Hook* lets you perform side effects in function components.
+
+```js
+// class 
+class Example extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0
+    };
+  }
+
+  componentDidMount() {
+    document.title = `You clicked ${this.state.count} times`;
+  }
+  componentDidUpdate() {
+    document.title = `You clicked ${this.state.count} times`;
+  }
+
+  render() {
+    return (
+      <div>
+        <p>You clicked {this.state.count} times</p>
+        <button onClick={() => this.setState({ count: this.state.count + 1 })}>
+          Click me
+        </button>
+      </div>
+    );
+  }
+}
+
+// function
+function Example() {
+  const [count, setCount] = useState(0);
+
+  // Similar to componentDidMount and componentDidUpdate:
+  useEffect(() => {
+    // Update the document title using the browser API
+    document.title = `You clicked ${count} times`;
+  });
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>
+        Click me
+      </button>
+    </div>
+  );
+}
+```
+
+### Dependencies
+
+```none
+Passing in an empty array of dependencies is NOT the same as not passing in any dependencies.
+
+No dependencies    =>    The side effect is evaluated every time the component is rendered
+
+Empty array        =>    The side effect is evaluated once on first render, and never again
+
+Note that the interpretation of empty array is consistent with a non-empty array.  The effect is executed whenever the dependencies change.  Since an empty array has no contents it is not executed again.
+```
+
+### Usage
+
+A setup function with setup code that connects to that system.
+It should return a cleanup function with cleanup code that disconnects from that system.
+A list of dependencies including every value from your component used inside of those functions.
+
+```js
+// function
+import { useEffect } from 'react';
+import { createConnection } from './chat.js';
+
+function ChatRoom({ roomId }) { 
+  const [serverUrl, setServerUrl] = useState('https://localhost:1234');
+
+  useEffect(() => {
+  	const connection = createConnection(serverUrl, roomId);
+    connection.connect(); // setup
+  	return () => {
+      connection.disconnect(); // clean up
+  	};
+  }, [serverUrl, roomId]); // ✅ you must specify them as dependencies of your Effect
+  // ...
+}
+```
+
+1. *setup code* runs when your components mounted
+2. After every re-render where the dependencies have changed:
+    * *cleanup code* runs with old porps and state.
+    * *setup code* runs with the new props and state.
+3. *cleanup code* runs one final time after component unmounted.
+
+#### Connecting to an external system
+
+```js
+import { useEffect } from 'react';
+import { createConnection } from './chat.js';
+
+function ChatRoom({ roomId }) {
+  const [serverUrl, setServerUrl] = useState('https://localhost:1234');
+
+  useEffect(() => {
+  	const connection = createConnection(serverUrl, roomId);
+    connection.connect();
+  	return () => {
+      connection.disconnect();
+  	};
+  }, [serverUrl, roomId]);
+  // ...
+}
+```
+
+#### Fetching data with Efffects
+
+```js
+import { useState, useEffect } from 'react';
+import { fetchBio } from './api.js';
+
+export default function Page() {
+  const [person, setPerson] = useState('Alice');
+  const [bio, setBio] = useState(null);
+
+  useEffect(() => {
+    let ignore = false;
+    setBio(null);
+    fetchBio(person).then(result => {
+      if (!ignore) {
+        setBio(result);
+      }
+    });
+    return () => {
+      ignore = true;
+    };
+  }, [person]);
+
+  // ...
+```
+
+## useRef
+
+let you reference a value that's not needed for rendering.
+
+```js
+import { useRef } from 'react';
+
+export default function Counter() {
+  let ref = useRef(0);
+
+  function handleClick() {
+    ref.current = ref.current + 1;
+    alert('You clicked ' + ref.current + ' times!');
+  }
+
+  return (
+    <button onClick={handleClick}>
+      Click me!
+    </button>
+  );
+}
+```
+
+- returns a mutable object whose *.current* property is initialized to the *initialValue*.
+- do not trigger re-render when its content changed.
+- unlike other React component, its reference value is mutable.
+
+### Usage
+
+**Do not write or read ref.current during rendering.**
+
+```js
+function MyComponent() {
+  // ...
+  // 🚩 Don't write a ref during rendering
+  myRef.current = 123;
+  // ...
+  // 🚩 Don't read a ref during rendering
+  return <h1>{myOtherRef.current}</h1>;
+}
+```
+
+**You can read or write refs from event handlers or effects instead.**
+
+```js
+function MyComponent() {
+  // ...
+  useEffect(() => {
+    // ✅ You can read or write refs in effects
+    myRef.current = 123;
+  });
+  // ...
+  function handleClick() {
+    // ✅ You can read or write refs in event handlers
+    doSomething(myOtherRef.current);
+  }
+  // ...
+}
+```
+
+### Manipulating the Dom with ref
+
+```js
+import { useRef } from 'react';
+
+export default function Form() {
+  const inputRef = useRef(null);
+
+  function handleClick() {
+    inputRef.current.focus();
+  }
+
+  return (
+    <>
+      <input ref={inputRef} />
+      <button onClick={handleClick}>
+        Focus the input
+      </button>
+    </>
+  );
+}
+```
+
+## useContext
+
+lets you read and subscribe to context from your component.
+
+```js
+/// page.js
+function MyPage() {
+  return (
+    <ThemeContext.Provider value="dark">
+      <Form />
+    </ThemeContext.Provider>
+  );
+}
+
+function Form() {
+  // ... renders buttons inside ...
+}
+
+/// button.js
+import { useContext } from 'react';
+
+function Button() {
+  const theme = useContext(ThemeContext);
+  // ...
+}
+```
+
+- Accepts a context object and returns the current context value for that context.
+- The current context value is determined by the value prop of the neareast *Context.Provider*.
+- Will re-render when the context value changes.
+
+### Usage
+
+#### Passing data deeply into the tree
+
+```js
+import { createContext, useContext } from 'react';
+
+const ThemeContext = createContext(null);
+
+export default function MyApp() {
+  return (
+    <ThemeContext.Provider value="dark">
+      <Form />
+    </ThemeContext.Provider>
+  )
+}
+
+function Form() {
+  return (
+    <Panel title="Welcome">
+      <Button>Sign up</Button>
+      <Button>Log in</Button>
+    </Panel>
+  );
+}
+
+function Panel({ title, children }) {
+  const theme = useContext(ThemeContext);
+  const className = 'panel-' + theme;
+  return (
+    <section className={className}>
+      <h1>{title}</h1>
+      {children}
+    </section>
+  )
+}
+
+function Button({ children }) {
+  const theme = useContext(ThemeContext);
+  const className = 'button-' + theme;
+  return (
+    <button className={className}>
+      {children}
+    </button>
+  );
+}
+
+```
+
+## useMemo and useCallback
+
+lets you cache the result of a calculation or a function definition between re-renders.
+
+useMemo
+
+* On the first render the hook involves the function.
+* On every subsequent React will compare the dependencies with the dependencies you passed during the last render. If none of the dependencies have changed (compared with Object.is), useMemo will return the value you already calculated before. Otherwise, React will re-run your calculation and return the new value.
+
+useCallback
+
+* On first render it returns its function argument
+* On subsequent renders it checks to see if the dependencies have changed.  If they have changed it returns the new functional argument.  If they have not changed it returns the same function value that was used on the previous render.
+
+```js
+import { useMemo, useCallback } from 'react';
+
+// memo
+function TodoList({ todos, tab }) {
+  const visibleTodos = useMemo(
+    // calculation function
+    () => filterTodos(todos, tab),
+    [todos, tab] // dependencies
+  );
+  // ...
+}
+
+// callback
+export default function ProductPage({ productId, referrer, theme }) {
+  const handleSubmit = useCallback((orderDetails) => {
+    post('/product/' + productId + '/buy', {
+      referrer,
+      orderDetails,
+    });
+  }, [productId, referrer]);
+```
+
+### Usage
+
+#### Skiping expensive recalculations
+
+```js
+export default function TodoList({ todos, tab, theme }) {
+  // Every time the theme changes, this will be a different array...
+  const visibleTodos = filterTodos(todos, tab);
+  return (
+    <div className={theme}>
+      {/* ... so List's props will never be the same, and it will re-render every time */}
+      <List items={visibleTodos} />
+    </div>
+  );
+}
+```
+
+```js
+export default function TodoList({ todos, tab, theme }) {
+  // Tell React to cache your calculation between re-renders...
+  const visibleTodos = useMemo(
+    () => filterTodos(todos, tab),
+    [todos, tab] // ...so as long as these dependencies don't change...
+  );
+  return (
+    <div className={theme}>
+      {/* ...List will receive the same props and can skip re-rendering */}
+      <List items={visibleTodos} />
+    </div>
+  );
+}
+```
+
+#### Skip re-rendering
+
+```js
+function ChatRoom({ roomId }) {
+  const [message, setMessage] = useState('');
+
+  function createOptions() {
+    return {
+      serverUrl: 'https://localhost:1234',
+      roomId: roomId
+    };
+  }
+
+  useEffect(() => {
+    const options = createOptions();
+    const connection = createConnection();
+    connection.connect();
+    return () => connection.disconnect();
+  }, [createOptions]); // 🔴 Problem: This dependency changes on every render
+  // ...
+```
+
+```js
+function ChatRoom({ roomId }) {
+  const [message, setMessage] = useState('');
+
+  const createOptions = useCallback(() => {
+    return {
+      serverUrl: 'https://localhost:1234',
+      roomId: roomId
+    };
+  }, [roomId]); // ✅ Only changes when roomId changes
+
+  useEffect(() => {
+    const options = createOptions();
+    const connection = createConnection();
+    connection.connect();
+    return () => connection.disconnect();
+  }, [createOptions]); // ✅ Only changes when createOptions changes
+  // ...
+```
+
+## useReduer 
+
+lets you add a reducer to your component.
+
+```js
+import { useReducer } from 'react';
+
+function reducer(state, action) {
+  // ...
+}
+
+function MyComponent() {
+  const [state, dispatch] = useReducer(reducer, { age: 42 });
+  // ...
+}
+```
+
+## Recep
+
+### Only Call Hooks at the Top Level
+
+**Don’t call Hooks inside loops, conditions, or nested functions.** Instead, always use Hooks at the top level of your React function, before any early returns. By following this rule, you ensure that Hooks are called in the same order each time a component renders. 
+
+### Only Call Hooks from React Functions
+
+**Don’t call Hooks from regular JavaScript functions**. Instead, you can:
+
+✅ Call Hooks from React function components.  
+✅ Call Hooks from custom Hooks (we’ll learn about them on the next page).
+
+By following this rule, you ensure that all stateful logic in a component is clearly visible from its source code.
+
+### Conclusion
+
+- useRef() is used to store value, that can be used or modified at any time (both during rendering and during event handling).  The value persists between render operations.
+- useState() is used to store value that can be used at render time but which can only be changed during event handling.  Modifying an instance’s state causes React to render the instance again.
+- useEffect() is used to trigger side-effects that are executed soon after a component has been rendered or just before it is rendered again or unmounted.  The programmer can control how frequently the effects are executed.  The hook needs to store state to track when it needs to be executed.
+- useMemo()/useCallback() to cache calculations/functions.
+
+### Hook flow
+
+![flow](https://raw.githubusercontent.com/donavon/hook-flow/master/hook-flow.png)
+
+React Hooks flow includes:
+
+- Mount
+- Update (when state changes based on any event)
+- UnMount
+
+#### Mount
+
+- Run the lazy initializer (functions passed to useState or useReducer)
+- Continue the rest of the render function
+- React updates the DOM
+- It runs LayoutEffects
+- Browser paints the screen to reflect
+- Runs the effects
+
+#### Update: (When the user make any event it update the state)
+
+- Runs the render phase
+- React updates DOM
+- Cleanup LayoutEffects first
+- Run LayoutEffects
+- Browser paints the screen
+- Cleanup the effects first
+- Run the effects in the render
+
+#### Unmount: Component gets removed from the screen (navigate to other screen or from user event)
+
+- Cleanup LayoutEffects
+- Cleanup Effects
+
+Note: Never confuse them with lifecycle methods in Class Components.
